@@ -21,8 +21,7 @@ def index():
 
 @app.route('/games')
 def games():
-
-    games = []
+    games = [] # Here we create a dictionary with the columns(attributes) we want.
     for game in Game.query.all():
         game_dict = {
             "title": game.title,
@@ -36,36 +35,72 @@ def games():
         games,
         200
     )
-
     return response
 
 @app.route('/games/<int:id>')
 def game_by_id(id):
     game = Game.query.filter(Game.id == id).first()
-    
-    game_dict = game.to_dict()
+    game_dict = game.to_dict() # By using the to_dict() method all the columns and also the relashionship (reviews) will be imported. The serialization rules in the model Game will determine what attributes of the relationship will be excluded. 
 
     response = make_response(
         game_dict,
         200
     )
-
     return response
 
-@app.route('/reviews')
+@app.route('/reviews', methods=['GET', 'POST'])
 def reviews():
 
-    reviews = []
-    for review in Review.query.all():
+    if request.method == 'GET': 
+        reviews = []
+        for review in Review.query.all():
+            review_dict = review.to_dict()
+            reviews.append(review_dict)
+
+        response = make_response(reviews, 200)
+        return response
+    
+    elif request.method == 'POST':
+        new_review = Review(
+            score=request.form.get("score"),
+            comment=request.form.get("comment"),
+            game_id=request.form.get("game_id"),
+            user_id=request.form.get("user.id"),
+        )
+        db.session.add(new_review)
+        db.session.commit()
+        review_dict = new_review.to_dict()
+        response = make_response(review_dict, 201) 
+        # A 201 status code means that a record has been successfully created.
+        return response
+
+@app.route('/reviews/<int:id>', methods=['GET', 'DELETE', 'PATCH'])
+def review_by_id(id):
+    
+    review = Review.query.filter(Review.id == id).first() # object
+
+    if request.method == 'GET': # The request context allows us to access the HTTP method used by the request and control flow from there.
         review_dict = review.to_dict()
-        reviews.append(review_dict)
+        response = make_response(review_dict, 200)
+        return response
+    
+    elif request.method == 'DELETE':
+        db.session.delete(review)
+        db.session.commit()
+        response_body = {"delete_successful": True, "message": "Review deleted."}
+        response = make_response(response_body, 200)
+        return response
+    
+    elif request.method == 'PATCH':
+        for attr in request.form: # update the record's attributes
+            setattr(review, attr, request.form.get(attr))
+            # setattr() allows us to use variable values as attribute names- when we don't know which fields are being updated, this is important.
 
-    response = make_response(
-        reviews,
-        200
-    )
-
-    return response
+        db.session.add(review)
+        db.session.commit()
+        review_dict = review.to_dict()
+        response = make_response(review_dict, 200) 
+        return response
 
 @app.route('/users')
 def users():
