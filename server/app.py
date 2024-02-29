@@ -79,7 +79,7 @@ def review_by_id(id):
 
     elif request.method == 'GET': # The request context allows us to access the HTTP method used by the request and control flow from there.
         review_dict = review.to_dict()
-        return response = make_response(review_dict, 200)
+        return response make_response(review_dict, 200)
     
     elif request.method == 'DELETE':
         db.session.delete(review)
