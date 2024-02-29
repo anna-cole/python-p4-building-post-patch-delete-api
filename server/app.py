@@ -31,10 +31,7 @@ def games():
         }
         games.append(game_dict)
 
-    response = make_response(
-        games,
-        200
-    )
+    response = make_response(games, 200)
     return response
 
 @app.route('/games/<int:id>')
@@ -42,10 +39,7 @@ def game_by_id(id):
     game = Game.query.filter(Game.id == id).first()
     game_dict = game.to_dict() # By using the to_dict() method all the columns and also the relashionship (reviews) will be imported. The serialization rules in the model Game will determine what attributes of the relationship will be excluded. 
 
-    response = make_response(
-        game_dict,
-        200
-    )
+    response = make_response(game_dict, 200)
     return response
 
 @app.route('/reviews', methods=['GET', 'POST'])
@@ -79,10 +73,13 @@ def review_by_id(id):
     
     review = Review.query.filter(Review.id == id).first() # object
 
-    if request.method == 'GET': # The request context allows us to access the HTTP method used by the request and control flow from there.
+    if review == None:
+        response_body = {"message": "This record does not exist in our database. Please try again."}
+        return make_response(response_body, 404)
+
+    elif request.method == 'GET': # The request context allows us to access the HTTP method used by the request and control flow from there.
         review_dict = review.to_dict()
-        response = make_response(review_dict, 200)
-        return response
+        return response = make_response(review_dict, 200)
     
     elif request.method == 'DELETE':
         db.session.delete(review)
